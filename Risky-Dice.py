@@ -18,7 +18,7 @@ pygame.init();
 screen = pygame.display.set_mode((WIDTH, HEIGHT));
 pygame.display.set_caption("Risky Dice");
 
-board = GameObjects.Board(6, 4, 12); #TEMP
+board = GameObjects.Board(6, 3, 12); #TEMP
 board.generate(HEIGHT);
 
 def render():
@@ -32,6 +32,14 @@ while(running):
     for event in pygame.event.get():
         if(event.type == pygame.QUIT):
            running = False;
+
+        elif(event.type == pygame.MOUSEBUTTONUP):
+            pos = event.pos;
+            board.handleClick(pos);
+
+            #TEMP
+            board.findPoints();
+            board.generate(HEIGHT);
 
     render();
 
