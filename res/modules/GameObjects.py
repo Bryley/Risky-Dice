@@ -48,8 +48,6 @@ class Square:
 
         self.font = pygame.font.Font(None, int(self.size-(7*self.size)/100));
 
-        self.color = player.getColor();
-
         self.rect = pygame.Rect(self.pos[0]*self.size, self.pos[1]*self.size, self.size, self.size);
 
     def render(self, surf):
@@ -59,7 +57,7 @@ class Square:
         else:
             self.surf.fill(BLACK);
         border = self.size * BORDER_PERCENT; #5% of the size of the square.
-        pygame.draw.rect(self.surf, self.color, pygame.Rect(border, border,
+        pygame.draw.rect(self.surf, self.player.getColor(), pygame.Rect(border, border,
                                                             self.size-BORDER_PERCENT*2*self.size,
                                                             self.size-BORDER_PERCENT*2*self.size));
         
@@ -74,17 +72,12 @@ class Square:
         
         surf.blit(self.surf, self.rect);
 
-    def handleClick(self, pos):
-        if(self.rect.collidepoint(pos)):
-            self.click();
+    def rollDice(self):
+        total = 0;
+        for roll in range(self.dice):
+            total += random.randint(1, 6);
 
-    #Triggered when clicked.
-    def click(self):
-        if(self.board.selected == self):
-            self.board.selected = None;
-
-        else:
-            self.board.selected = self;
+        return total;
 
 
 class Board:
@@ -116,10 +109,99 @@ class Board:
 
         surf.blit(self.surf, (self.mainSurf.get_width()/2-size/2, BOARD_Y_OFFSET));
 
+    def takeOverSquare(self, domSquare, square):
+        #domSquare stands for dominate square which is the square that will take over the 'square'.
+
+        #TODO make animation showing roll numbers.
+        
+        dRoll = domSquare.rollDice();
+        roll = square.rollDice();
+
+        if(dRoll > roll):
+            square.player = domSquare.player;
+            square.dice = domSquare.dice-1;
+
+            domSquare.dice = 1;
+
+        else:
+            domSquare.dice = 1;
+
+    #Gets the number of adjacent avalable squares
+    def getAvalableAdjacentSquares(self, x, y, targetPlayer):
+        #targetPlayer is the target player the function will count.
+        count = 0;
+
+        if(x > 0):
+            if(self.board[y][x-1].player != targetPlayer):
+                count += 1;
+        if(x < self.size-1):
+            if(self.board[y][x+1].player != targetPlayer):
+                count += 1;
+
+        if(y > 0):
+            if(self.board[y-1][x].player != targetPlayer):
+                count += 1;
+
+        if(y < self.size-1):
+            if(self.board[y+1][x].player != targetPlayer):
+                count += 1;
+
+        return count;
+        
+
+    #Handles validation of square selection.
     def handleClick(self, pos):
+        x = 0;
+        y = 0;
         for row in self.board:
             for col in row:
-                col.handleClick(self.transPos(pos));
+                if(col.rect.collidepoint(self.transPos(pos))):
+
+                    #If the square clicked is already selected...
+                    if(col == self.selected):
+                        #Unselect it
+                        self.selected = None;
+                        return;
+
+                    #If picking atacking square.
+                    if(self.selected != None):
+                        #If the clicked squares player is not the current player...
+                        if(col.player != self.turn):
+                            count = 0;
+                            if(x > 0):
+                                if(self.board[y][x-1] == self.selected):
+                                    count += 1;
+                            if(x < self.size-1):
+                                if(self.board[y][x+1] == self.selected):
+                                    count += 1;
+                            if(y > 0):
+                                if(self.board[y-1][x] == self.selected):
+                                    count += 1;
+                            if(y < self.size-1):
+                                if(self.board[y+1][x] == self.selected):
+                                    count += 1;
+
+                            if(count > 0):
+
+                                self.takeOverSquare(self.selected, col);
+                                if(col.player == self.turn and col.dice != 1):
+                                    self.selected = col;
+                                else:
+                                    self.selected = None;
+
+                        return;
+                            
+                    if(col.dice == 1):
+                        return;
+                    
+                    if(col.player == self.turn):
+                        
+                        if(self.getAvalableAdjacentSquares(x, y, self.turn) > 0):
+                            self.selected = col;
+                
+                x += 1;
+            x = 0;
+            y += 1;
 
     def findPoints(self):
         for player in self.players:
@@ -136,7 +218,7 @@ class Board:
 
         
 
-
+    #Looping function for findingPoints algorithm.
     def floodFillCheck(self, x, y, player):
         #Do this statement but look for an IndexError.
         try:

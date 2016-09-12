@@ -5,13 +5,16 @@ import sys;
 sys.path.append("res/modules"); #Change path to the modules folder.
 import GameObjects;
 
-#Global Variables
-running = True;
-
 #Constant Variables
 WIDTH = 800;
 HEIGHT = 600;
 WHITE = (255,255,255);
+
+GAMESTATE = ["Main menu", "In Game"];
+
+#Global Variables
+running = True;
+gameState = GAMESTATE[1];
 
 pygame.init();
 
@@ -36,10 +39,6 @@ while(running):
         elif(event.type == pygame.MOUSEBUTTONUP):
             pos = event.pos;
             board.handleClick(pos);
-
-            #TEMP
-            board.findPoints();
-            board.generate(HEIGHT);
 
     render();
 
