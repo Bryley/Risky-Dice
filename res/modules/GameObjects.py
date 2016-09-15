@@ -26,7 +26,7 @@ BORDER_PERCENT = 5/100;
 
 BOARD_Y_OFFSET = 100;
 
-PLAYERS = [Player(P1BLUE, True), Player(P2RED), Player(P3GREEN), Player(P4ORANGE)];
+PLAYERS = [Player(P1BLUE, True), Player(P2RED, True), Player(P3GREEN, True), Player(P4ORANGE, True)];
 
 #Returns empty 2d list.
 def createMultiDimList(size): #Stands for create multidimensional list.
@@ -35,6 +35,127 @@ def createMultiDimList(size): #Stands for create multidimensional list.
         list1.append([]);
 
     return list1;
+
+def chance(percentage):
+        generatedNum = random.randint(0, 100);
+
+        if(generatedNum >= percentage):
+            return True;
+
+        return False;
+
+class AI:
+
+    def __init__(self, board):
+        self.board = board;
+        self.player = None;
+        self.timer = 0;
+
+        self.squares = None;
+
+    #resets to the next player.
+    def nextPlayer(self, player):
+        self.player = player;
+        
+        if(self.player != None):
+            self.squares = self.getAvalableSquares();
+
+    def update(self):
+        if(self.player != None):
+            if(self.squares == None):
+                self.board.nextPlayer();
+            self.timer += 1;
+
+            if(self.timer >= 25):
+                self.doTurn();
+                
+                self.timer = 0;
+
+    def getAvalableSquares(self):
+        squares = [];
+        x=0;
+        y=0;
+        for row in self.board.board:
+            for col in row:
+                if(col.player == self.player):
+                    numberOfAdSquares = self.board.getAvalableAdjacentSquares(x, y, self.player); #Stands for number of adjacent squares.
+
+                    if(numberOfAdSquares > 0):
+                        squares.append((x, y));
+
+                x+=1;
+            y+=1;
+            x=0;
+
+        return squares;
+
+    def doTurn(self):
+        squares = self.squares;
+
+        for count in range(random.randint(5, 15)):
+            square = random.choice(squares);#TODO try and except.
+            x = square[0];
+            y = square[1];
+
+            if(x > 0):
+                defendingSquare = self.board.board[y][x-1];
+                #If the player is not equal to attcking square player.
+                if(defendingSquare.player != self.player):
+                    #If the dice is less than the attackers dice
+                    if(defendingSquare.dice <= self.board.board[y][x].dice):
+                        #Continue 75% of the time.
+                        if(chance(75)):
+                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                            try:
+                                squares.remove((x, y));
+                                squares.remove((x-1, y));
+                            except ValueError:
+                                pass;
+                        
+            elif(x < self.board.size-1):
+                defendingSquare = self.board.board[y][x+1];
+                #If the player is not equal to attcking square player.
+                if(defendingSquare.player != self.player):
+                    #If the dice is less than the attackers dice
+                    if(defendingSquare.dice <= self.board.board[y][x].dice):
+                        #Continue 75% of the time.
+                        if(chance(75)):
+                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                            try:
+                                squares.remove((x, y));
+                                squares.remove((x+1, y));
+                            except ValueError:
+                                pass;
+            elif(y > 0):
+                defendingSquare = self.board.board[y-1][x];
+                #If the player is not equal to attcking square player.
+                if(defendingSquare.player != self.player):
+                    #If the dice is less than the attackers dice
+                    if(defendingSquare.dice <= self.board.board[y][x].dice):
+                        #Continue 75% of the time.
+                        if(chance(75)):
+                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                            try:
+                                squares.remove((x, y));
+                                squares.remove((x, y-1));
+                            except ValueError:
+                                pass;
+
+            elif(y < self.board.size-1):
+                defendingSquare = self.board.board[y+1][x];
+                #If the player is not equal to attcking square player.
+                if(defendingSquare.player != self.player):
+                    #If the dice is less than the attackers dice
+                    if(defendingSquare.dice <= self.board.board[y][x].dice):
+                        #Continue 75% of the time.
+                        if(chance(75)):
+                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                            try:
+                                squares.remove((x, y));
+                                squares.remove((x, y+1));
+                            except ValueError:
+                                pass;
+                
 
 class Square:
 
@@ -89,7 +210,9 @@ class Board:
         self.maxDice = maxDice;
         self.board = createMultiDimList(self.size);
 
+        self.turnNumber = 0;
         self.turn = self.players[0];
+        self.ai = AI(self);
 
         self.points = {};
 
@@ -109,6 +232,37 @@ class Board:
 
         surf.blit(self.surf, (self.mainSurf.get_width()/2-size/2, BOARD_Y_OFFSET));
 
+    def distributeDice(self):
+        self.findPoints();
+        
+        points = self.points[self.turn];
+        
+        while points > 0:
+            for row in self.board:
+                for square in row:
+                    if(square.player == self.turn):
+                        if(chance(50)):
+                            ranDice = random.randint(0, points);
+                            if(ranDice+square.dice > self.maxDice):
+                                ranDice = self.maxDice - square.dice;
+
+                            points -= ranDice;
+                            square.dice += ranDice;
+
+    def nextTurn(self):
+        self.selected = None;
+        self.turnNumber += 1;
+
+        if(self.turnNumber > len(self.players)-1):
+            self.turnNumber = 0;
+
+        self.distributeDice();
+        
+        self.turn = self.players[self.turnNumber];
+        if(self.turn.human == False):
+            self.ai.nextPlayer(self.turn);
+            self.ai.doTurn();
+
     def takeOverSquare(self, domSquare, square):
         #domSquare stands for dominate square which is the square that will take over the 'square'.
 
@@ -125,6 +279,8 @@ class Board:
 
         else:
             domSquare.dice = 1;
+
+        self.findPoints();
 
     #Gets the number of adjacent avalable squares
     def getAvalableAdjacentSquares(self, x, y, targetPlayer):
@@ -214,7 +370,6 @@ class Board:
                     values.append(self.count);
 
             self.points[player] = max(values);
-            print("FINISHED: " + str(max(values)));
 
         
 
