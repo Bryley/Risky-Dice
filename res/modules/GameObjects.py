@@ -224,6 +224,12 @@ class Board:
         self.turn = self.players[0];
         self.ai = AI(self);
 
+        self.moves = {};
+        for player in self.players:
+            self.moves[player] = 0;
+
+        self.record = 0;
+
         self.points = {};
 
         self.selected = None;
@@ -291,6 +297,7 @@ class Board:
             domSquare.dice = 1;
 
         self.findPoints();
+        self.moves[self.turn] += 1;
 
     #Gets the number of adjacent avalable squares
     def getAvalableAdjacentSquares(self, x, y, targetPlayer):
@@ -373,7 +380,7 @@ class Board:
             y += 1;
 
     def win(self):
-        GUI.openedPanel = GUI.Panel(self.turn, self.mainSurf);
+        GUI.openedPanel = GUI.Panel(self, self.mainSurf);
 
     def findPoints(self):
         for player in self.players:

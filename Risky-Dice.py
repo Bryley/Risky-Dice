@@ -7,6 +7,11 @@ import GameObjects;
 import GUI;
 
 #Constant Variables
+
+NUMBER_OF_PLAYERS = 3;
+NUMBER_OF_SQUARES = 8;
+MAX_DICE = 10;
+
 WIDTH = 800;
 HEIGHT = 600;
 WHITE = (255,255,255);
@@ -22,11 +27,11 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT));
 pygame.display.set_caption("Risky Dice");
 
 updater = pygame.time.Clock(); #Used to update game at a given FPS
-
+    
 class InGame:
 
     def __init__(self):
-        self.board = GameObjects.Board(2, 2, 10);
+        self.board = GameObjects.Board(NUMBER_OF_SQUARES, NUMBER_OF_PLAYERS, MAX_DICE);
         self.board.generate(HEIGHT);
         self.board.findPoints();
         self.endButton = GUI.EndTurnButton((WIDTH/2, HEIGHT-50), self.board);
@@ -45,9 +50,23 @@ class InGame:
     def handleClick(self, pos):
         self.board.handleClick(pos);
         self.endButton.handleClick(pos);
+        
 
 GAMESTATE = ["Main menu", InGame()];
 gameState = GAMESTATE[1];
+
+def load():
+    file = open("res/highscore.txt");
+
+    for line in file:
+        GAMESTATE[1].board.record = int(line);
+    
+    file.close();
+
+def save():
+    file = open("res/highscore.txt", "w");
+    file.write(str(GAMESTATE[1].board.record));
+    file.close();
 
 def render():
     screen.fill(WHITE);
@@ -59,6 +78,9 @@ def render():
 
 def update():
     gameState.update();
+
+
+load();
 
 while(running):
 
@@ -81,5 +103,6 @@ while(running):
     update();
     updater.tick(FPS); #Updates program at FPS time.
 
+save();
 pygame.quit();
 #quit();

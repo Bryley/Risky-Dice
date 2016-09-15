@@ -9,6 +9,7 @@ BORDER_PERCENT = 5/100;
 
 #Global Variables
 openedPanel = None;
+highscores = [];
 
 def render(surf):
     if(openedPanel != None):
@@ -96,12 +97,10 @@ class HUD:
         surf.blit(self.surf, (0, 0));
 
 
-
-
 class Panel:
 
-    def __init__(self, winner, surf):
-        self.winner = winner;
+    def __init__(self, board, surf):
+        self.board = board;
         self.button = None;
         self.mainSurf = surf;
 
@@ -112,7 +111,7 @@ class Panel:
         self.surf.fill((200, 200, 200));
 
         font = pygame.font.Font(None, 50);
-        fontArea = font.render("Player " + str(self.winner.number) + " wins the game.", True, BLACK);
+        fontArea = font.render("Player " + str(self.board.turn.number) + " wins the game.", True, BLACK);
         fontRect = fontArea.get_rect();
 
         fontRect.center = (self.surf.get_width()//2, self.surf.get_height()/4);
@@ -129,7 +128,6 @@ class Panel:
         if(self.button != None):
             if(self.button.rect.collidepoint(self.transPos(pos))):
                 openedPanel = None;
-                
 
 
     def transPos(self, pos):
