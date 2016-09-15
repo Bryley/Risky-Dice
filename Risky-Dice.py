@@ -21,22 +21,26 @@ pygame.init();
 screen = pygame.display.set_mode((WIDTH, HEIGHT));
 pygame.display.set_caption("Risky Dice");
 
-board = GameObjects.Board(6, 3, 12); #TEMP
-board.generate(HEIGHT);
-
 updater = pygame.time.Clock(); #Used to update game at a given FPS
 
 class InGame:
 
     def __init__(self):
-        self.board = GameObjects.Board(6, 3, 10);
+        self.board = GameObjects.Board(2, 2, 10);
         self.board.generate(HEIGHT);
+        self.board.findPoints();
         self.endButton = GUI.EndTurnButton((WIDTH/2, HEIGHT-50), self.board);
 
+        self.hud = GUI.HUD(self.board);
+
     def render(self, surf):
+        self.hud.render(surf);
         self.board.render(surf);
         if(self.board.turn.human):
             self.endButton.button.render(surf);
+
+    def update(self):
+        self.board.ai.update();
 
     def handleClick(self, pos):
         self.board.handleClick(pos);
@@ -49,10 +53,12 @@ def render():
     screen.fill(WHITE);
     
     gameState.render(screen);
+    
+    GUI.render(screen);
     pygame.display.update();
 
 def update():
-    board.ai.update();
+    gameState.update();
 
 while(running):
 
@@ -63,6 +69,7 @@ while(running):
         elif(event.type == pygame.MOUSEBUTTONUP):
             pos = event.pos;
             gameState.handleClick(pos);
+            GUI.handleClick(pos);
 
         elif(event.type == pygame.KEYDOWN):
             key = event.key;

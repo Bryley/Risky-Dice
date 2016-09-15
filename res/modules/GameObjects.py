@@ -2,12 +2,14 @@
 import pygame;
 import random;
 import math;
+import GUI;
 
 class Player:
 
-    def __init__(self, color, human=False):
+    def __init__(self, color, num, human=False):
         self.color = color;
         self.human = human;
+        self.number = num;
 
     def getColor(self):
         return self.color;
@@ -26,7 +28,7 @@ BORDER_PERCENT = 5/100;
 
 BOARD_Y_OFFSET = 100;
 
-PLAYERS = [Player(P1BLUE, True), Player(P2RED, True), Player(P3GREEN, True), Player(P4ORANGE, True)];
+PLAYERS = [Player(P1BLUE, 1, True), Player(P2RED, 2, True), Player(P3GREEN, 3, True), Player(P4ORANGE, 4, True)];
 
 #Returns empty 2d list.
 def createMultiDimList(size): #Stands for create multidimensional list.
@@ -51,6 +53,8 @@ class AI:
         self.player = None;
         self.timer = 0;
 
+        self.moves = random.randint(0, 15);
+
         self.squares = None;
 
     #resets to the next player.
@@ -59,15 +63,22 @@ class AI:
         
         if(self.player != None):
             self.squares = self.getAvalableSquares();
+            self.moves = random.randint(0, 15);
 
     def update(self):
         if(self.player != None):
+
+            if(self.moves <= 0):
+                self.board.nextTurn();
+                return;
+            
             if(self.squares == None):
                 self.board.nextPlayer();
             self.timer += 1;
 
-            if(self.timer >= 25):
+            if(self.timer >= 25 and self.moves > 0):
                 self.doTurn();
+                self.moves -=1;
                 
                 self.timer = 0;
 
@@ -92,69 +103,68 @@ class AI:
     def doTurn(self):
         squares = self.squares;
 
-        for count in range(random.randint(5, 15)):
-            square = random.choice(squares);#TODO try and except.
-            x = square[0];
-            y = square[1];
+        square = random.choice(squares);#TODO try and except.
+        x = square[0];
+        y = square[1];
 
-            if(x > 0):
-                defendingSquare = self.board.board[y][x-1];
-                #If the player is not equal to attcking square player.
-                if(defendingSquare.player != self.player):
-                    #If the dice is less than the attackers dice
-                    if(defendingSquare.dice <= self.board.board[y][x].dice):
-                        #Continue 75% of the time.
-                        if(chance(75)):
-                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
-                            try:
-                                squares.remove((x, y));
-                                squares.remove((x-1, y));
-                            except ValueError:
-                                pass;
-                        
-            elif(x < self.board.size-1):
-                defendingSquare = self.board.board[y][x+1];
-                #If the player is not equal to attcking square player.
-                if(defendingSquare.player != self.player):
-                    #If the dice is less than the attackers dice
-                    if(defendingSquare.dice <= self.board.board[y][x].dice):
-                        #Continue 75% of the time.
-                        if(chance(75)):
-                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
-                            try:
-                                squares.remove((x, y));
-                                squares.remove((x+1, y));
-                            except ValueError:
-                                pass;
-            elif(y > 0):
-                defendingSquare = self.board.board[y-1][x];
-                #If the player is not equal to attcking square player.
-                if(defendingSquare.player != self.player):
-                    #If the dice is less than the attackers dice
-                    if(defendingSquare.dice <= self.board.board[y][x].dice):
-                        #Continue 75% of the time.
-                        if(chance(75)):
-                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
-                            try:
-                                squares.remove((x, y));
-                                squares.remove((x, y-1));
-                            except ValueError:
-                                pass;
+        if(x > 0):
+            defendingSquare = self.board.board[y][x-1];
+            #If the player is not equal to attcking square player.
+            if(defendingSquare.player != self.player):
+                #If the dice is less than the attackers dice
+                if(defendingSquare.dice <= self.board.board[y][x].dice):
+                    #Continue 75% of the time.
+                    if(chance(75)):
+                        self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                        try:
+                            squares.remove((x, y));
+                            squares.remove((x-1, y));
+                        except ValueError:
+                            pass;
+                    
+        elif(x < self.board.size-1):
+            defendingSquare = self.board.board[y][x+1];
+            #If the player is not equal to attcking square player.
+            if(defendingSquare.player != self.player):
+                #If the dice is less than the attackers dice
+                if(defendingSquare.dice <= self.board.board[y][x].dice):
+                    #Continue 75% of the time.
+                    if(chance(75)):
+                        self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                        try:
+                            squares.remove((x, y));
+                            squares.remove((x+1, y));
+                        except ValueError:
+                            pass;
+        elif(y > 0):
+            defendingSquare = self.board.board[y-1][x];
+            #If the player is not equal to attcking square player.
+            if(defendingSquare.player != self.player):
+                #If the dice is less than the attackers dice
+                if(defendingSquare.dice <= self.board.board[y][x].dice):
+                    #Continue 75% of the time.
+                    if(chance(75)):
+                        self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                        try:
+                            squares.remove((x, y));
+                            squares.remove((x, y-1));
+                        except ValueError:
+                            pass;
 
-            elif(y < self.board.size-1):
-                defendingSquare = self.board.board[y+1][x];
-                #If the player is not equal to attcking square player.
-                if(defendingSquare.player != self.player):
-                    #If the dice is less than the attackers dice
-                    if(defendingSquare.dice <= self.board.board[y][x].dice):
-                        #Continue 75% of the time.
-                        if(chance(75)):
-                            self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
-                            try:
-                                squares.remove((x, y));
-                                squares.remove((x, y+1));
-                            except ValueError:
-                                pass;
+        elif(y < self.board.size-1):
+            defendingSquare = self.board.board[y+1][x];
+            #If the player is not equal to attcking square player.
+            if(defendingSquare.player != self.player):
+                #If the dice is less than the attackers dice
+                if(defendingSquare.dice <= self.board.board[y][x].dice):
+                    #Continue 75% of the time.
+                    if(chance(75)):
+                        self.board.takeOverSquare(self.board.board[y][x], self.board.board[y][x-1]);
+                        try:
+                            squares.remove((x, y));
+                            squares.remove((x, y+1));
+                        except ValueError:
+                            pass;
                 
 
 class Square:
@@ -313,6 +323,9 @@ class Board:
             for col in row:
                 if(col.rect.collidepoint(self.transPos(pos))):
 
+                    if(self.turn.human == False):
+                        return;
+
                     #If the square clicked is already selected...
                     if(col == self.selected):
                         #Unselect it
@@ -359,6 +372,9 @@ class Board:
             x = 0;
             y += 1;
 
+    def win(self):
+        GUI.openedPanel = GUI.Panel(self.turn, self.mainSurf);
+
     def findPoints(self):
         for player in self.players:
             values = [];
@@ -370,6 +386,9 @@ class Board:
                     values.append(self.count);
 
             self.points[player] = max(values);
+
+        if(self.points[self.turn] >= self.size**2):
+            self.win();
 
         
 
